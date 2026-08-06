@@ -106,7 +106,7 @@ export const Hero: React.FC = React.memo(() => {
               rel="noopener noreferrer"
               className="px-7 py-3.5 glass-card text-white font-semibold rounded-lg hover:border-accent/40 hover:text-accent hover:-translate-y-1 transition-all duration-300 text-sm tracking-wide"
             >
-              Resume
+              GitHub
             </a>
             <a
               href="#contact"
