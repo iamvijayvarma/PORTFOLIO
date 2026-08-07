@@ -174,14 +174,6 @@ export const Hero: React.FC = React.memo(() => {
                 </div>
               </div>
             </div>
-
-            {/* Orbit floaters */}
-            <div className={`absolute -top-4 -right-4 w-12 h-12 rounded-full glass-card flex items-center justify-center text-accent ${isLowEnd ? '' : 'animate-float'}`}>
-              <span className="text-xs font-mono font-bold">Java</span>
-            </div>
-            <div className={`absolute top-1/2 -left-6 w-12 h-12 rounded-full glass-card flex items-center justify-center text-accent ${isLowEnd ? '' : 'animate-float [animation-delay:2s]'}`}>
-              <span className="text-xs font-mono font-bold">Robo</span>
-            </div>
           </div>
         </div>
       </div>
