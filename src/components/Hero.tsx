@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
 import { ArrowDown, Cpu, Code2, Sparkles } from 'lucide-react';
 import { useDevicePerformance } from '../hooks/useDevicePerformance';
@@ -12,19 +12,10 @@ export const Hero: React.FC = React.memo(() => {
   const period = 1500;
   const delta = 100;
 
-  // Typing Effect
-  useEffect(() => {
-    let ticker = setInterval(() => {
-      tick();
-    }, delta);
-
-    return () => clearInterval(ticker);
-  }, [displayText, isDeleting]);
-
-  const tick = () => {
-    let i = titleIdx % titles.length;
-    let fullText = titles[i];
-    let updatedText = isDeleting
+  const tick = useCallback(() => {
+    const i = titleIdx % titles.length;
+    const fullText = titles[i];
+    const updatedText = isDeleting
       ? fullText.substring(0, displayText.length - 1)
       : fullText.substring(0, displayText.length + 1);
 
@@ -36,7 +27,16 @@ export const Hero: React.FC = React.memo(() => {
       setIsDeleting(false);
       setTitleIdx((prev) => prev + 1);
     }
-  };
+  }, [titleIdx, titles, isDeleting, displayText, period]);
+
+  // Typing Effect
+  useEffect(() => {
+    const ticker = setInterval(() => {
+      tick();
+    }, delta);
+
+    return () => clearInterval(ticker);
+  }, [tick, delta]);
 
   // Parallax Tilt Effect
   const containerRef = useRef<HTMLDivElement>(null);

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { GithubIcon, LinkedinIcon, MailIcon } from './SocialIcons';
@@ -13,6 +14,8 @@ export const Navbar: React.FC = React.memo(() => {
   const [activeSection, setActiveSection] = useState('home');
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
+  const isNavigatingRef = useRef(false);
+
   const navLinks = useMemo(() => [
     { label: 'Home', href: '#home', id: 'home' },
     { label: 'About', href: '#about', id: 'about' },
@@ -23,43 +26,96 @@ export const Navbar: React.FC = React.memo(() => {
     { label: 'Contact', href: '#contact', id: 'contact' },
   ], []);
 
-  // Smooth scroll click handler
+  const sectionIds = useMemo(() => ['home', 'about', 'skills', 'projects', 'experience', 'achievements', 'contact'], []);
+
+  // Pre-calculated target position retriever accounting for GSAP ScrollTrigger pins and spacers
+  const getSectionScrollTarget = useCallback((id: string): number => {
+    if (id === 'home') return 0;
+
+    // Check pre-calculated ScrollTrigger start position
+    const st = ScrollTrigger.getById(`nav-section-${id}`);
+    if (st && typeof st.start === 'number' && !isNaN(st.start) && st.start >= 0) {
+      return st.start;
+    }
+
+    // Fallback: Check element directly in document flow
+    const el = document.getElementById(id);
+    if (!el) return 0;
+
+    // If target has a pin-spacer (like #skills when pinned), measure the pin spacer
+    const pinSpacer = el.closest('.pin-spacer') as HTMLElement | null;
+    const targetEl = pinSpacer || el;
+
+    const rect = targetEl.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
+    const navOffset = id === 'skills' ? 0 : 80;
+
+    return Math.max(0, rect.top + scrollTop - navOffset);
+  }, []);
+
+  // Programmatic smooth scroll engine using GSAP ScrollToPlugin
+  const scrollToSection = useCallback((id: string, updateHash = true) => {
+    const targetY = getSectionScrollTarget(id);
+
+    // Mark navigating state to prevent scroll spy jitter during programmatic scroll
+    isNavigatingRef.current = true;
+    setActiveSection(id);
+
+    // Kill any existing window tweens to prevent fight
+    gsap.killTweensOf(window);
+
+    const currentY = window.pageYOffset || document.documentElement.scrollTop || 0;
+    const distance = Math.abs(targetY - currentY);
+    // Smooth dynamic duration between 0.5s and 1.1s based on distance
+    const duration = Math.min(1.1, Math.max(0.5, distance / 3500));
+
+    gsap.to(window, {
+      scrollTo: {
+        y: targetY,
+        autoKill: false,
+      },
+      duration,
+      ease: 'power3.inOut',
+      onComplete: () => {
+        isNavigatingRef.current = false;
+        setActiveSection(id);
+        ScrollTrigger.refresh();
+      },
+      onInterrupt: () => {
+        isNavigatingRef.current = false;
+      }
+    });
+
+    if (updateHash) {
+      window.history.pushState(null, '', `#${id}`);
+    }
+  }, [getSectionScrollTarget]);
+
+  // Smooth scroll click handler for navbar items
   const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
     setIsOpen(false);
-    setActiveSection(id);
-
-    const targetEl = document.getElementById(id);
-    if (!targetEl) return;
-
-    if (id === 'home') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      window.history.pushState(null, '', '#home');
-      return;
-    }
-
-    const navOffset = 80;
-    const targetY = targetEl.getBoundingClientRect().top + window.scrollY - navOffset;
-    window.scrollTo({ top: targetY, behavior: 'smooth' });
-    window.history.pushState(null, '', `#${id}`);
-  }, []);
+    scrollToSection(id);
+  }, [scrollToSection]);
 
   // Scroll Detection & ScrollTrigger Synchronization Hook
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
+    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
-    const sectionIds = ['home', 'about', 'skills', 'projects', 'experience', 'achievements', 'contact'];
-
-    // High-precision viewport intersection evaluation
+    // High-precision viewport intersection evaluation for manual scrolling
     const updateActiveSection = () => {
+      if (isNavigatingRef.current) return;
+
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+
       // Top of page safeguard
-      if (window.scrollY < 100) {
+      if (scrollY < 100) {
         setActiveSection('home');
         return;
       }
 
       // Bottom of page safeguard (near footer/contact)
-      const isAtBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 100;
+      const isAtBottom = window.innerHeight + scrollY >= document.documentElement.scrollHeight - 100;
       if (isAtBottom) {
         setActiveSection('contact');
         return;
@@ -73,16 +129,19 @@ export const Navbar: React.FC = React.memo(() => {
         const el = document.getElementById(id);
         if (!el) continue;
 
-        const rect = el.getBoundingClientRect();
+        const pinSpacer = el.closest('.pin-spacer') as HTMLElement | null;
+        const measureEl = pinSpacer || el;
+        const rect = measureEl.getBoundingClientRect();
+
         // Section encompasses or has passed the trigger point while still visible
-        if (rect.top <= triggerPoint && rect.bottom > 0) {
+        if (rect.top <= triggerPoint && rect.bottom > triggerPoint) {
           setActiveSection(id);
           return;
         }
       }
     };
 
-    // Dedicated ScrollTrigger instances for each section
+    // Dedicated ScrollTrigger instances for each section to precalculate start coordinates
     const triggers: ScrollTrigger[] = [];
 
     sectionIds.forEach((id) => {
@@ -90,13 +149,19 @@ export const Navbar: React.FC = React.memo(() => {
       if (!el) return;
 
       const trigger = ScrollTrigger.create({
+        id: `nav-section-${id}`,
         trigger: el,
-        start: id === 'home' ? 'top top' : 'top 50%',
-        end: 'bottom 50%',
-        onEnter: () => setActiveSection(id),
-        onEnterBack: () => setActiveSection(id),
+        start: id === 'home' ? 'top top' : id === 'skills' ? 'top top' : 'top 80px',
+        end: 'bottom 80px',
+        refreshPriority: 0,
+        onEnter: () => {
+          if (!isNavigatingRef.current) setActiveSection(id);
+        },
+        onEnterBack: () => {
+          if (!isNavigatingRef.current) setActiveSection(id);
+        },
         onToggle: (self) => {
-          if (self.isActive) {
+          if (!isNavigatingRef.current && self.isActive) {
             setActiveSection(id);
           }
         },
@@ -105,46 +170,95 @@ export const Navbar: React.FC = React.memo(() => {
       triggers.push(trigger);
     });
 
-    // Native scroll listener for rapid scroll tracking
+    // Refresh ScrollTrigger to calculate initial trigger positions
+    ScrollTrigger.refresh();
+
+    // Native scroll listener for rapid manual scroll tracking
     const handleScroll = () => {
       updateActiveSection();
     };
 
+    // Release navigation lock on manual user scroll gesture
+    const handleUserInterruption = () => {
+      if (isNavigatingRef.current) {
+        gsap.killTweensOf(window);
+        isNavigatingRef.current = false;
+        updateActiveSection();
+      }
+    };
+
+    // Global delegated click listener for any internal anchor links (Hero CTA buttons, About links, etc.)
+    const handleGlobalAnchorClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href^="#"]') as HTMLAnchorElement | null;
+      if (!anchor) return;
+
+      const href = anchor.getAttribute('href');
+      if (!href || href === '#' || !href.startsWith('#')) return;
+
+      const targetId = href.slice(1);
+      if (!sectionIds.includes(targetId)) return;
+
+      e.preventDefault();
+      setIsOpen(false);
+      scrollToSection(targetId);
+    };
+
+    // Browser back/forward button support
+    const handlePopState = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && sectionIds.includes(hash)) {
+        scrollToSection(hash, false);
+      } else if (!hash) {
+        scrollToSection('home', false);
+      }
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('wheel', handleUserInterruption, { passive: true });
+    window.addEventListener('touchstart', handleUserInterruption, { passive: true });
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    document.addEventListener('click', handleGlobalAnchorClick);
     ScrollTrigger.addEventListener('refresh', updateActiveSection);
     ScrollTrigger.addEventListener('scrollEnd', updateActiveSection);
 
     // Initial check
     updateActiveSection();
 
-    // Handle initial hash navigation if URL contains #section on page load
-    const hash = window.location.hash.replace('#', '');
-    if (hash && sectionIds.includes(hash)) {
+    // Handle initial hash navigation if URL contains #section on initial load
+    const initialHash = window.location.hash.replace('#', '');
+    if (initialHash && sectionIds.includes(initialHash)) {
       const timer = setTimeout(() => {
-        const targetEl = document.getElementById(hash);
-        if (targetEl) {
-          const navOffset = 80;
-          const targetY = targetEl.getBoundingClientRect().top + window.scrollY - navOffset;
-          window.scrollTo({ top: targetY, behavior: 'smooth' });
-          setActiveSection(hash);
-        }
+        scrollToSection(initialHash, false);
       }, 400);
       return () => {
         clearTimeout(timer);
         window.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('wheel', handleUserInterruption);
+        window.removeEventListener('touchstart', handleUserInterruption);
+        window.removeEventListener('popstate', handlePopState);
+        window.removeEventListener('hashchange', handlePopState);
+        document.removeEventListener('click', handleGlobalAnchorClick);
         ScrollTrigger.removeEventListener('refresh', updateActiveSection);
         ScrollTrigger.removeEventListener('scrollEnd', updateActiveSection);
         triggers.forEach((t) => t.kill());
+        gsap.killTweensOf(window);
       };
     }
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('wheel', handleUserInterruption);
+      window.removeEventListener('touchstart', handleUserInterruption);
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+      document.removeEventListener('click', handleGlobalAnchorClick);
       ScrollTrigger.removeEventListener('refresh', updateActiveSection);
       ScrollTrigger.removeEventListener('scrollEnd', updateActiveSection);
       triggers.forEach((t) => t.kill());
+      gsap.killTweensOf(window);
     };
-  }, []);
+  }, [sectionIds, scrollToSection]);
 
   return (
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] md:w-auto z-50 flex items-center justify-between">
