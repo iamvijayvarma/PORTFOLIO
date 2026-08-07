@@ -24,10 +24,6 @@ export const Footer: React.FC = React.memo(() => {
     return () => clearInterval(interval);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <footer className="py-12 px-6 md:px-12 max-w-7xl mx-auto border-t border-borderCustom bg-[#090909]">
       <div className="flex flex-col md:flex-row justify-between items-center gap-8">
@@ -84,13 +80,14 @@ export const Footer: React.FC = React.memo(() => {
             </a>
           </div>
 
-          <button
-            onClick={scrollToTop}
-            className="p-3 rounded-lg bg-neutral-900 border border-borderCustom hover:border-accent hover:text-accent transition-all text-secondary"
+          <a
+            href="#home"
+            className="p-3 rounded-lg bg-neutral-900 border border-borderCustom hover:border-accent hover:text-accent transition-all text-secondary inline-flex items-center justify-center"
             title="Back to Top"
+            aria-label="Back to Top"
           >
             <ArrowUp size={16} />
-          </button>
+          </a>
         </div>
       </div>
     </footer>

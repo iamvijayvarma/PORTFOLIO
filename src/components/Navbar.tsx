@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
@@ -28,21 +27,14 @@ export const Navbar: React.FC = React.memo(() => {
 
   const sectionIds = useMemo(() => ['home', 'about', 'skills', 'projects', 'experience', 'achievements', 'contact'], []);
 
-  // Pre-calculated target position retriever accounting for GSAP ScrollTrigger pins and spacers
+  // Pin-aware direct DOM geometry scroll target retriever
   const getSectionScrollTarget = useCallback((id: string): number => {
     if (id === 'home') return 0;
 
-    // Check pre-calculated ScrollTrigger start position
-    const st = ScrollTrigger.getById(`nav-section-${id}`);
-    if (st && typeof st.start === 'number' && !isNaN(st.start) && st.start >= 0) {
-      return st.start;
-    }
-
-    // Fallback: Check element directly in document flow
     const el = document.getElementById(id);
     if (!el) return 0;
 
-    // If target has a pin-spacer (like #skills when pinned), measure the pin spacer
+    // If target has a pin-spacer (like #skills when pinned), measure the pin spacer in document flow
     const pinSpacer = el.closest('.pin-spacer') as HTMLElement | null;
     const targetEl = pinSpacer || el;
 
@@ -50,7 +42,7 @@ export const Navbar: React.FC = React.memo(() => {
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0;
     const navOffset = id === 'skills' ? 0 : 80;
 
-    return Math.max(0, rect.top + scrollTop - navOffset);
+    return Math.max(0, Math.round(rect.top + scrollTop - navOffset));
   }, []);
 
   // Programmatic smooth scroll engine using GSAP ScrollToPlugin
@@ -61,13 +53,13 @@ export const Navbar: React.FC = React.memo(() => {
     isNavigatingRef.current = true;
     setActiveSection(id);
 
-    // Kill any existing window tweens to prevent fight
+    // Kill any existing window tweens to prevent conflict
     gsap.killTweensOf(window);
 
     const currentY = window.pageYOffset || document.documentElement.scrollTop || 0;
     const distance = Math.abs(targetY - currentY);
-    // Smooth dynamic duration between 0.5s and 1.1s based on distance
-    const duration = Math.min(1.1, Math.max(0.5, distance / 3500));
+    // Smooth dynamic duration between 0.5s and 1.0s based on distance
+    const duration = Math.min(1.0, Math.max(0.5, distance / 4000));
 
     gsap.to(window, {
       scrollTo: {
@@ -79,7 +71,6 @@ export const Navbar: React.FC = React.memo(() => {
       onComplete: () => {
         isNavigatingRef.current = false;
         setActiveSection(id);
-        ScrollTrigger.refresh();
       },
       onInterrupt: () => {
         isNavigatingRef.current = false;
@@ -98,32 +89,34 @@ export const Navbar: React.FC = React.memo(() => {
     scrollToSection(id);
   }, [scrollToSection]);
 
-  // Scroll Detection & ScrollTrigger Synchronization Hook
+  // Scroll Detection & Event Listeners
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+    gsap.registerPlugin(ScrollToPlugin);
 
-    // High-precision viewport intersection evaluation for manual scrolling
+    let rafId: number | null = null;
+
+    // Viewport intersection evaluation for manual scrolling
     const updateActiveSection = () => {
       if (isNavigatingRef.current) return;
 
       const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
 
-      // Top of page safeguard
+      // 1. Top of page safeguard
       if (scrollY < 100) {
         setActiveSection('home');
         return;
       }
 
-      // Bottom of page safeguard (near footer/contact)
+      // 2. Bottom of page safeguard (near footer/contact)
       const isAtBottom = window.innerHeight + scrollY >= document.documentElement.scrollHeight - 100;
       if (isAtBottom) {
         setActiveSection('contact');
         return;
       }
 
-      const triggerPoint = window.innerHeight * 0.45; // 45% viewport trigger height
+      const triggerPoint = window.innerHeight * 0.4; // 40% viewport trigger height
 
-      // Check from bottom section upwards to accurately match the active section
+      // 3. Check from bottom section upwards to accurately match the active section
       for (let i = sectionIds.length - 1; i >= 0; i--) {
         const id = sectionIds[i];
         const el = document.getElementById(id);
@@ -141,50 +134,10 @@ export const Navbar: React.FC = React.memo(() => {
       }
     };
 
-    // Dedicated ScrollTrigger instances for each section to precalculate start coordinates
-    const triggers: ScrollTrigger[] = [];
-
-    sectionIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-
-      const trigger = ScrollTrigger.create({
-        id: `nav-section-${id}`,
-        trigger: el,
-        start: id === 'home' ? 'top top' : id === 'skills' ? 'top top' : 'top 80px',
-        end: 'bottom 80px',
-        refreshPriority: 0,
-        onEnter: () => {
-          if (!isNavigatingRef.current) setActiveSection(id);
-        },
-        onEnterBack: () => {
-          if (!isNavigatingRef.current) setActiveSection(id);
-        },
-        onToggle: (self) => {
-          if (!isNavigatingRef.current && self.isActive) {
-            setActiveSection(id);
-          }
-        },
-      });
-
-      triggers.push(trigger);
-    });
-
-    // Refresh ScrollTrigger to calculate initial trigger positions
-    ScrollTrigger.refresh();
-
-    // Native scroll listener for rapid manual scroll tracking
+    // Native scroll listener throttled with requestAnimationFrame
     const handleScroll = () => {
-      updateActiveSection();
-    };
-
-    // Release navigation lock on manual user scroll gesture
-    const handleUserInterruption = () => {
-      if (isNavigatingRef.current) {
-        gsap.killTweensOf(window);
-        isNavigatingRef.current = false;
-        updateActiveSection();
-      }
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateActiveSection);
     };
 
     // Global delegated click listener for any internal anchor links (Hero CTA buttons, About links, etc.)
@@ -214,27 +167,19 @@ export const Navbar: React.FC = React.memo(() => {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('wheel', handleUserInterruption, { passive: true });
-    window.addEventListener('touchstart', handleUserInterruption, { passive: true });
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('hashchange', handlePopState);
     document.addEventListener('click', handleGlobalAnchorClick);
-    ScrollTrigger.addEventListener('refresh', updateActiveSection);
-    ScrollTrigger.addEventListener('scrollEnd', updateActiveSection);
 
     // Initial check
     updateActiveSection();
 
     return () => {
+      if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('wheel', handleUserInterruption);
-      window.removeEventListener('touchstart', handleUserInterruption);
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('hashchange', handlePopState);
       document.removeEventListener('click', handleGlobalAnchorClick);
-      ScrollTrigger.removeEventListener('refresh', updateActiveSection);
-      ScrollTrigger.removeEventListener('scrollEnd', updateActiveSection);
-      triggers.forEach((t) => t.kill());
       gsap.killTweensOf(window);
     };
   }, [sectionIds, scrollToSection]);

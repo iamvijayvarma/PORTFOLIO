@@ -73,8 +73,10 @@ function App() {
       content.classList.remove('initial-hide');
     }
 
-    // Refresh ScrollTrigger from clean top position
-    ScrollTrigger.refresh();
+    // Refresh ScrollTrigger after layout becomes active
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+    });
   };
 
   return (
