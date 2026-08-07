@@ -23,6 +23,41 @@ export const Splash: React.FC<SplashProps> = React.memo(({ onMorphStart, onCompl
       return;
     }
 
+    // Responsive width calculations for GSAP animations
+    const width = window.innerWidth;
+    const isDesktop = width >= 1024;
+    const isTablet = width >= 768 && width < 1024;
+
+    // Calculate dynamic "IJAY" expansion width
+    let textWidth = 220; // Desktop default (>=1024px)
+    if (isDesktop) {
+      textWidth = 220;
+    } else if (isTablet) {
+      textWidth = 180;
+    } else {
+      const ijaySpan = document.getElementById('splash-ijay-span');
+      if (ijaySpan && ijaySpan.scrollWidth > 0) {
+        textWidth = Math.ceil(ijaySpan.scrollWidth) + 4;
+      } else {
+        textWidth = width < 360 ? 110 : width < 400 ? 125 : 140;
+      }
+    }
+
+    // Calculate orange divider line width:
+    // Desktop: exactly 300px
+    // Tablet: proportionally scaled ~240px
+    // Mobile: 70-80% (~75%) of title width
+    let targetLineWidth = 300;
+    if (isDesktop) {
+      targetLineWidth = 300;
+    } else if (isTablet) {
+      targetLineWidth = 240;
+    } else {
+      const titleEl = document.getElementById('splash-brand-title');
+      const titleWidth = titleEl && titleEl.offsetWidth > 0 ? titleEl.offsetWidth : (width < 360 ? 150 : 180);
+      targetLineWidth = Math.max(90, Math.round(titleWidth * 0.75));
+    }
+
     const tl = gsap.timeline({
       onComplete: onComplete
     });
@@ -45,7 +80,7 @@ export const Splash: React.FC<SplashProps> = React.memo(({ onMorphStart, onCompl
 
     // Scene 03: "IJAY" unfolds horizontally (0.35s)
     tl.to('#splash-text', {
-      width: window.innerWidth < 768 ? 160 : 220,
+      width: textWidth,
       opacity: 1,
       duration: 0.35,
       ease: 'power3.inOut'
@@ -57,7 +92,7 @@ export const Splash: React.FC<SplashProps> = React.memo(({ onMorphStart, onCompl
     // Scene 05: Centered orange accent line
     tl.to('#splash-line', {
       opacity: 1,
-      width: window.innerWidth < 768 ? 220 : 300,
+      width: targetLineWidth,
       duration: 0.3,
       ease: 'power3.out'
     }, '-=0.15');
@@ -73,12 +108,15 @@ export const Splash: React.FC<SplashProps> = React.memo(({ onMorphStart, onCompl
       onStart: onMorphStart
     });
 
+    return () => {
+      tl.kill();
+    };
   }, [onMorphStart, onComplete]);
 
   return (
     <div
       id="splash-overlay"
-      className="fixed inset-0 z-[999999] bg-[#090909] select-none overflow-hidden"
+      className="fixed inset-0 z-[999999] min-h-[100dvh] w-full bg-[#090909] select-none overflow-hidden flex flex-col items-center justify-center p-4 sm:p-6"
     >
       {/* Subtle vignette layer */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_50%,rgba(0,0,0,0.85)_100%)] pointer-events-none" />
@@ -90,22 +128,25 @@ export const Splash: React.FC<SplashProps> = React.memo(({ onMorphStart, onCompl
       {!isLowEnd && (
         <div
           id="splash-glow"
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-accent/10 blur-[100px] pointer-events-none transform-gpu"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 rounded-full bg-accent/10 blur-[60px] sm:blur-[80px] md:blur-[100px] pointer-events-none transform-gpu"
         />
       )}
 
       {/* Center Reveal Composition */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center space-y-6 transform-gpu">
+      <div className="relative z-10 flex flex-col items-center space-y-3 sm:space-y-4 md:space-y-6 max-w-full transform-gpu">
         {/* Brand Name Composition */}
-        <div className="flex items-center justify-center h-24 font-heading text-4xl md:text-5xl font-black tracking-[0.25em] pl-[0.25em]">
-          <span id="splash-v" className="text-[#FF7A00] transform-gpu">
+        <div
+          id="splash-brand-title"
+          className="flex items-center justify-center h-14 sm:h-16 md:h-24 font-heading text-[clamp(1.75rem,6.5vw,2.5rem)] md:text-5xl font-black tracking-[0.18em] sm:tracking-[0.22em] md:tracking-[0.25em] pl-[0.18em] sm:pl-[0.22em] md:pl-[0.25em]"
+        >
+          <span id="splash-v" className="text-[#FF7A00] transform-gpu inline-block">
             V
           </span>
           <div
             id="splash-text"
             className="overflow-hidden flex items-center transform-gpu"
           >
-            <span className="text-white">
+            <span id="splash-ijay-span" className="text-white whitespace-nowrap inline-block">
               IJAY
             </span>
           </div>
@@ -118,14 +159,16 @@ export const Splash: React.FC<SplashProps> = React.memo(({ onMorphStart, onCompl
           style={{ willChange: 'width, opacity' }}
         />
 
-        {/* Subtitle taglines */}
-        <div className="overflow-hidden h-8 flex items-center justify-center">
-          <p
-            id="splash-tagline"
-            className="text-xs md:text-sm font-mono tracking-[0.2em] text-neutral-400 uppercase transform-gpu"
-          >
-            AI Developer &nbsp;•&nbsp; Java Developer &nbsp;•&nbsp; ECE Undergraduate
-          </p>
+        {/* Subtitle taglines - responsive non-clipped wrapping */}
+        <div
+          id="splash-tagline"
+          className="flex flex-wrap items-center justify-center gap-x-2 sm:gap-x-2.5 gap-y-1 px-3 text-center font-mono text-[10px] sm:text-xs md:text-sm tracking-[0.12em] sm:tracking-[0.16em] md:tracking-[0.2em] text-neutral-400 uppercase max-w-[90vw] sm:max-w-md md:max-w-none transform-gpu"
+        >
+          <span className="whitespace-nowrap">AI Developer</span>
+          <span className="text-[#FF7A00]/70 select-none">•</span>
+          <span className="whitespace-nowrap">Java Developer</span>
+          <span className="text-[#FF7A00]/70 select-none">•</span>
+          <span className="whitespace-nowrap">ECE Undergraduate</span>
         </div>
       </div>
     </div>
