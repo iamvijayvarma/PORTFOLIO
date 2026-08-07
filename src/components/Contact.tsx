@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
-import { Send, CheckCircle2 } from 'lucide-react';
-import { GithubIcon, LinkedinIcon, MailIcon } from './SocialIcons';
+import { Send, CheckCircle2, FileText } from 'lucide-react';
+import { GithubIcon, LinkedinIcon, InstagramIcon, MailIcon } from './SocialIcons';
 import confetti from 'canvas-confetti';
 
 export const Contact: React.FC = React.memo(() => {
@@ -57,12 +57,14 @@ export const Contact: React.FC = React.memo(() => {
 
           <div className="space-y-6">
             {/* Action Contact Anchors */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
+              {/* 1. Email */}
               <a
                 href={`mailto:${PORTFOLIO_DATA.socials.email}`}
-                className="flex items-center space-x-3 text-secondary hover:text-white transition-colors group max-w-max"
+                aria-label="Direct Email"
+                className="flex items-center space-x-3 text-secondary hover:text-white transition-colors group max-w-max focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg p-1 -ml-1"
               >
-                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-borderCustom flex items-center justify-center text-accent group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-borderCustom flex items-center justify-center text-accent group-hover:scale-105 group-hover:border-accent/40 group-hover:shadow-[0_0_15px_rgba(255,122,0,0.15)] transition-all">
                   <MailIcon size={18} />
                 </div>
                 <div>
@@ -73,13 +75,34 @@ export const Contact: React.FC = React.memo(() => {
                 </div>
               </a>
 
+              {/* 2. GitHub */}
+              <a
+                href={PORTFOLIO_DATA.socials.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub Profile"
+                className="flex items-center space-x-3 text-secondary hover:text-white transition-colors group max-w-max focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg p-1 -ml-1"
+              >
+                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-borderCustom flex items-center justify-center text-accent group-hover:scale-105 group-hover:border-accent/40 group-hover:shadow-[0_0_15px_rgba(255,122,0,0.15)] transition-all">
+                  <GithubIcon size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
+                    GitHub Source
+                  </p>
+                  <p className="text-sm font-mono">iamvijayvarma</p>
+                </div>
+              </a>
+
+              {/* 3. LinkedIn */}
               <a
                 href={PORTFOLIO_DATA.socials.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-3 text-secondary hover:text-white transition-colors group max-w-max"
+                aria-label="LinkedIn Profile"
+                className="flex items-center space-x-3 text-secondary hover:text-white transition-colors group max-w-max focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg p-1 -ml-1"
               >
-                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-borderCustom flex items-center justify-center text-accent group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-borderCustom flex items-center justify-center text-accent group-hover:scale-105 group-hover:border-accent/40 group-hover:shadow-[0_0_15px_rgba(255,122,0,0.15)] transition-all">
                   <LinkedinIcon size={18} />
                 </div>
                 <div>
@@ -90,20 +113,41 @@ export const Contact: React.FC = React.memo(() => {
                 </div>
               </a>
 
+              {/* 4. Instagram */}
               <a
-                href={PORTFOLIO_DATA.socials.github}
+                href={PORTFOLIO_DATA.socials.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-3 text-secondary hover:text-white transition-colors group max-w-max"
+                aria-label="Instagram Profile"
+                className="flex items-center space-x-3 text-secondary hover:text-white transition-colors group max-w-max focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg p-1 -ml-1"
               >
-                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-borderCustom flex items-center justify-center text-accent group-hover:scale-105 transition-transform">
-                  <GithubIcon size={18} />
+                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-borderCustom flex items-center justify-center text-accent group-hover:scale-105 group-hover:border-accent/40 group-hover:shadow-[0_0_15px_rgba(255,122,0,0.15)] transition-all">
+                  <InstagramIcon size={18} />
                 </div>
                 <div>
                   <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
-                    GitHub Source
+                    Instagram Profile
                   </p>
-                  <p className="text-sm font-mono">iamvijayvarma</p>
+                  <p className="text-sm font-mono">{PORTFOLIO_DATA.socials.instagramHandle}</p>
+                </div>
+              </a>
+
+              {/* 5. Resume */}
+              <a
+                href={PORTFOLIO_DATA.socials.resume}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Curriculum Vitae"
+                className="flex items-center space-x-3 text-secondary hover:text-white transition-colors group max-w-max focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg p-1 -ml-1"
+              >
+                <div className="w-10 h-10 rounded-lg bg-neutral-900 border border-borderCustom flex items-center justify-center text-accent group-hover:scale-105 group-hover:border-accent/40 group-hover:shadow-[0_0_15px_rgba(255,122,0,0.15)] transition-all">
+                  <FileText size={18} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
+                    Curriculum Vitae
+                  </p>
+                  <p className="text-sm font-mono">View Resume.pdf</p>
                 </div>
               </a>
             </div>

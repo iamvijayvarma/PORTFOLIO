@@ -75,6 +75,8 @@ export const PORTFOLIO_DATA = {
   socials: {
     github: "https://github.com/iamvijayvarma",
     linkedin: "https://www.linkedin.com/in/vijay-varma-07b857339/",
+    instagram: "https://instagram.com/YOUR_USERNAME",
+    instagramHandle: "@YOUR_USERNAME",
     email: "vvarmavijay18@gmail.com",
     resume: "/resume.pdf"
   },

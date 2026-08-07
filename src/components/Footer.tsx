@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
 import { ArrowUp } from 'lucide-react';
-import { GithubIcon, LinkedinIcon, MailIcon } from './SocialIcons';
+import { GithubIcon, LinkedinIcon, InstagramIcon, MailIcon } from './SocialIcons';
 
 export const Footer: React.FC = React.memo(() => {
   const [timeString, setTimeString] = useState('');
@@ -60,7 +60,8 @@ export const Footer: React.FC = React.memo(() => {
               href={PORTFOLIO_DATA.socials.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-neutral-500 hover:text-white transition-colors"
+              aria-label="GitHub"
+              className="text-neutral-500 hover:text-white hover:scale-105 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
             >
               <GithubIcon size={18} />
             </a>
@@ -68,13 +69,24 @@ export const Footer: React.FC = React.memo(() => {
               href={PORTFOLIO_DATA.socials.linkedin}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-neutral-500 hover:text-white transition-colors"
+              aria-label="LinkedIn"
+              className="text-neutral-500 hover:text-white hover:scale-105 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
             >
               <LinkedinIcon size={18} />
             </a>
             <a
+              href={PORTFOLIO_DATA.socials.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="text-neutral-500 hover:text-white hover:scale-105 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
+            >
+              <InstagramIcon size={18} />
+            </a>
+            <a
               href={`mailto:${PORTFOLIO_DATA.socials.email}`}
-              className="text-neutral-500 hover:text-white transition-colors"
+              aria-label="Email"
+              className="text-neutral-500 hover:text-white hover:scale-105 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
             >
               <MailIcon size={18} />
             </a>

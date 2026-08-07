@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
-import { GithubIcon, LinkedinIcon, MailIcon } from './SocialIcons';
+import { GithubIcon, LinkedinIcon, InstagramIcon, MailIcon } from './SocialIcons';
 import { useDevicePerformance } from '../hooks/useDevicePerformance';
 
 export const Navbar: React.FC = React.memo(() => {
@@ -260,7 +260,8 @@ export const Navbar: React.FC = React.memo(() => {
             href={PORTFOLIO_DATA.socials.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-accent transition-colors"
+            aria-label="GitHub"
+            className="hover:text-accent hover:scale-105 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
           >
             <GithubIcon size={16} />
           </a>
@@ -268,9 +269,19 @@ export const Navbar: React.FC = React.memo(() => {
             href={PORTFOLIO_DATA.socials.linkedin}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-accent transition-colors"
+            aria-label="LinkedIn"
+            className="hover:text-accent hover:scale-105 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
           >
             <LinkedinIcon size={16} />
+          </a>
+          <a
+            href={PORTFOLIO_DATA.socials.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            className="hover:text-accent hover:scale-105 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
+          >
+            <InstagramIcon size={16} />
           </a>
         </div>
 
@@ -338,12 +349,13 @@ export const Navbar: React.FC = React.memo(() => {
 
             <div className="h-[1px] bg-white/10 w-full" />
 
-            <div className="flex justify-around items-center text-neutral-400">
+            <div className="flex justify-around items-center text-neutral-400 px-2">
               <a
                 href={PORTFOLIO_DATA.socials.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-accent transition-colors"
+                aria-label="GitHub"
+                className="hover:text-accent hover:scale-105 transition-all p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
               >
                 <GithubIcon size={20} />
               </a>
@@ -351,13 +363,24 @@ export const Navbar: React.FC = React.memo(() => {
                 href={PORTFOLIO_DATA.socials.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-accent transition-colors"
+                aria-label="LinkedIn"
+                className="hover:text-accent hover:scale-105 transition-all p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
               >
                 <LinkedinIcon size={20} />
               </a>
               <a
+                href={PORTFOLIO_DATA.socials.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="hover:text-accent hover:scale-105 transition-all p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
+              >
+                <InstagramIcon size={20} />
+              </a>
+              <a
                 href={`mailto:${PORTFOLIO_DATA.socials.email}`}
-                className="hover:text-accent transition-colors"
+                aria-label="Email"
+                className="hover:text-accent hover:scale-105 transition-all p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-lg"
               >
                 <MailIcon size={20} />
               </a>
