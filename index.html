@@ -47,6 +47,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Syne:wght@400..800&family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
 
+    <!-- Disable automatic browser scroll restoration & reset scroll to top on every load -->
+    <script>
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+      if (window.location.hash) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      if (document.body) {
+        document.body.scrollTop = 0;
+      }
+    </script>
+
     <!-- Prevent FOUC/Hero flashes on load -->
     <style>
       .initial-hide {

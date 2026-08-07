@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { BackgroundCanvas } from './components/BackgroundCanvas';
 import { CustomCursor } from './components/CustomCursor';
 import { Navbar } from './components/Navbar';
@@ -15,10 +17,31 @@ import { Splash } from './components/Splash';
 function App() {
   const [introFinished, setIntroFinished] = useState(false);
 
+  // Force scroll to top and manual scroll restoration on mount
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    if (document.body) {
+      document.body.scrollTop = 0;
+    }
+
+    // Clear any lingering URL hash on initial load
+    if (window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, []);
+
   // Disable scroll while splash curtain overlay is active
   useEffect(() => {
     if (!introFinished) {
       document.body.style.overflow = 'hidden';
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
     } else {
       document.body.style.overflow = '';
     }
@@ -38,11 +61,20 @@ function App() {
   // Triggered when splash completes its fade-out
   const handleSplashComplete = () => {
     setIntroFinished(true);
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    if (document.body) {
+      document.body.scrollTop = 0;
+    }
+
     // Ensure final state is 100% visible and scrollable
     const content = document.getElementById('portfolio-content');
     if (content) {
       content.classList.remove('initial-hide');
     }
+
+    // Refresh ScrollTrigger from clean top position
+    ScrollTrigger.refresh();
   };
 
   return (

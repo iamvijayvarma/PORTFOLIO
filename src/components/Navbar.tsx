@@ -225,27 +225,6 @@ export const Navbar: React.FC = React.memo(() => {
     // Initial check
     updateActiveSection();
 
-    // Handle initial hash navigation if URL contains #section on initial load
-    const initialHash = window.location.hash.replace('#', '');
-    if (initialHash && sectionIds.includes(initialHash)) {
-      const timer = setTimeout(() => {
-        scrollToSection(initialHash, false);
-      }, 400);
-      return () => {
-        clearTimeout(timer);
-        window.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('wheel', handleUserInterruption);
-        window.removeEventListener('touchstart', handleUserInterruption);
-        window.removeEventListener('popstate', handlePopState);
-        window.removeEventListener('hashchange', handlePopState);
-        document.removeEventListener('click', handleGlobalAnchorClick);
-        ScrollTrigger.removeEventListener('refresh', updateActiveSection);
-        ScrollTrigger.removeEventListener('scrollEnd', updateActiveSection);
-        triggers.forEach((t) => t.kill());
-        gsap.killTweensOf(window);
-      };
-    }
-
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('wheel', handleUserInterruption);
