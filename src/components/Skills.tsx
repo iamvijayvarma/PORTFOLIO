@@ -240,9 +240,6 @@ export const Skills: React.FC = React.memo(() => {
             <div className="flex items-center space-x-3 text-neutral-400 text-xs font-mono pt-2">
               <div className="flex items-center space-x-2 text-[#FF7A00]">
                 <Sparkles size={14} />
-                <span className="font-semibold uppercase tracking-wider">
-                  Scroll horizontally
-                </span>
               </div>
               <ArrowRight size={14} className="text-[#FF7A00] animate-pulse" />
             </div>
