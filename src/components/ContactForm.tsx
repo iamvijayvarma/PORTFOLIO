@@ -110,9 +110,9 @@ export const ContactForm: React.FC = React.memo(() => {
     setSubmitStatus('idle');
     setStatusMessage('');
 
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
-    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_nb720bk';
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_t5hokpd';
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'cSwCyg9IzK6krCWLy';
 
     try {
       if (!serviceId || !templateId || !publicKey) {
