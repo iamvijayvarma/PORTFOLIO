@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import emailjs from '@emailjs/browser';
-import { Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Send, CheckCircle2, AlertCircle, Loader2, Zap } from 'lucide-react';
 import { PORTFOLIO_DATA } from '../data/portfolioData';
 import { GithubIcon, LinkedinIcon, InstagramIcon, MailIcon } from './SocialIcons';
 import confetti from 'canvas-confetti';
@@ -21,7 +21,7 @@ interface FormErrors {
 }
 
 export const ContactForm: React.FC = React.memo(() => {
-  const [formData, setFormData] = useState<FormData>({
+  const [form, setForm] = useState<FormData>({
     name: '',
     email: '',
     subject: '',
@@ -30,8 +30,23 @@ export const ContactForm: React.FC = React.memo(() => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [testRunning, setTestRunning] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
+  const [rawErrorText, setRawErrorText] = useState<string | null>(null);
+
+  // Startup verification log
+  useEffect(() => {
+    const service = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_nb720bk';
+    const template = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_t5hokpd';
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'cSwCyg9IzK6krCWLy';
+
+    console.log('--- EmailJS Environment Variables Verification ---', {
+      service,
+      template,
+      publicKey: publicKey ? `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}` : undefined,
+    });
+  }, []);
 
   const socials = [
     {
@@ -67,24 +82,24 @@ export const ContactForm: React.FC = React.memo(() => {
   const validate = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.name.trim()) {
+    if (!form.name.trim()) {
       newErrors.name = 'Full Name is required';
     }
 
-    if (!formData.email.trim()) {
+    if (!form.email.trim()) {
       newErrors.email = 'Email Address is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       newErrors.email = 'Please enter a valid email address';
     }
 
-    if (!formData.subject.trim()) {
+    if (!form.subject.trim()) {
       newErrors.subject = 'Subject is required';
     }
 
-    if (!formData.message.trim()) {
+    if (!form.message.trim()) {
       newErrors.message = 'Message is required';
-    } else if (formData.message.trim().length < 10) {
-      newErrors.message = 'Message must be at least 10 characters';
+    } else if (form.message.trim().length < 5) {
+      newErrors.message = 'Message must be at least 5 characters';
     }
 
     setErrors(newErrors);
@@ -93,21 +108,21 @@ export const ContactForm: React.FC = React.memo(() => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
 
-    // Clear inline error on typing
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const sendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) return;
 
     setIsSubmitting(true);
     setSubmitStatus('idle');
+    setRawErrorText(null);
     setStatusMessage('');
 
     const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_nb720bk';
@@ -115,56 +130,111 @@ export const ContactForm: React.FC = React.memo(() => {
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'cSwCyg9IzK6krCWLy';
 
     try {
-      if (!serviceId || !templateId || !publicKey) {
-        // If keys aren't configured yet, attempt simulated delivery + clear log
-        console.warn(
-          'EmailJS environment variables (VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID, VITE_EMAILJS_PUBLIC_KEY) are not set. Configure them in .env for real email transmission.'
-        );
-        // Simulate a brief delay to demonstrate the UI states
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } else {
-        await emailjs.send(
-          serviceId,
-          templateId,
-          {
-            from_name: formData.name.trim(),
-            from_email: formData.email.trim(),
-            subject: formData.subject.trim(),
-            message: formData.message.trim(),
-            to_email: 'vvarmavijay18@gmail.com',
-          },
-          publicKey
-        );
-      }
+      // Send parameters matching exact EmailJS template variable names {{name}}, {{email}}, {{subject}}, {{message}}
+      const templateParams = {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        subject: form.subject.trim(),
+        message: form.message.trim(),
+        // Also provide standard aliases in case template uses from_name/from_email
+        from_name: form.name.trim(),
+        from_email: form.email.trim(),
+        reply_to: form.email.trim(),
+        to_email: 'vvarmavijay18@gmail.com',
+      };
 
+      const response = await emailjs.send(
+        serviceId,
+        templateId,
+        templateParams,
+        publicKey
+      );
+
+      console.log('EMAILJS SUCCESS', response);
       setSubmitStatus('success');
       setStatusMessage('Message sent successfully!');
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setForm({
+        name: '',
+        email: '',
+        subject: '',
+        message: '',
+      });
       setErrors({});
 
-      // Celebration Confetti
       try {
         confetti({
-          particleCount: 70,
+          particleCount: 75,
           spread: 60,
           origin: { y: 0.8 },
           colors: ['#FF7A00', '#ffffff', '#22c55e'],
         });
       } catch {
-        // Ignore confetti error if canvas is not available
+        // Confetti fallback
       }
 
-      // Reset success status after 6 seconds
       setTimeout(() => {
         setSubmitStatus('idle');
         setStatusMessage('');
       }, 6000);
-    } catch (err: unknown) {
-      console.error('EmailJS Error:', err);
+    } catch (error: unknown) {
+      console.error('EMAILJS ERROR', error);
+      console.error(JSON.stringify(error, null, 2));
+
       setSubmitStatus('error');
-      setStatusMessage('Failed to send message. Please try again.');
+      const errObj = error as { text?: string; message?: string; status?: number };
+      const detailedError =
+        errObj?.text || errObj?.message || (typeof error === 'string' ? error : JSON.stringify(error));
+      
+      setRawErrorText(detailedError);
+      setStatusMessage('Email failed to send. Check the error details below or open the browser console.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Direct Connection Test Button logic
+  const testEmail = async () => {
+    setTestRunning(true);
+    setRawErrorText(null);
+
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID || 'service_nb720bk';
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || 'template_t5hokpd';
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || 'cSwCyg9IzK6krCWLy';
+
+    try {
+      const res = await emailjs.send(
+        serviceId,
+        templateId,
+        {
+          name: 'Vijay',
+          email: 'test@gmail.com',
+          subject: 'Portfolio Test',
+          message: 'This is a direct EmailJS test from your portfolio.',
+          from_name: 'Vijay',
+          from_email: 'test@gmail.com',
+          to_email: 'vvarmavijay18@gmail.com',
+        },
+        publicKey
+      );
+
+      console.log('DIRECT TEST SUCCESS', res);
+      alert('Direct EmailJS test worked! An email has been delivered to vvarmavijay18@gmail.com');
+      setSubmitStatus('success');
+      setStatusMessage('Direct EmailJS test succeeded! Connection is 100% verified.');
+    } catch (err: unknown) {
+      console.error('DIRECT TEST FAILED', err);
+      console.error(JSON.stringify(err, null, 2));
+
+      const errObj = err as { text?: string; message?: string; status?: number };
+      const detailedError =
+        errObj?.text || errObj?.message || (typeof err === 'string' ? err : JSON.stringify(err));
+
+      setRawErrorText(detailedError);
+      setSubmitStatus('error');
+      setStatusMessage(`Direct EmailJS test failed: ${detailedError}`);
+      alert(`Direct EmailJS test failed: ${detailedError}`);
+    } finally {
+      setTestRunning(false);
     }
   };
 
@@ -248,7 +318,7 @@ export const ContactForm: React.FC = React.memo(() => {
             {/* Subtle card glow edge */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-accent/[0.03] rounded-full blur-3xl pointer-events-none" />
 
-            <form onSubmit={handleSubmit} noValidate className="space-y-5 sm:space-y-6 relative z-10">
+            <form onSubmit={sendEmail} noValidate className="space-y-5 sm:space-y-6 relative z-10">
               {/* Full Name & Email Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
                 {/* Full Name */}
@@ -260,9 +330,9 @@ export const ContactForm: React.FC = React.memo(() => {
                     id="contact-name"
                     name="name"
                     type="text"
-                    value={formData.name}
+                    value={form.name}
                     onChange={handleChange}
-                    placeholder="Vijay Varma"
+                    placeholder="Vijay"
                     className={`w-full bg-white/[0.04] border ${
                       errors.name ? 'border-red-500/80 focus:border-red-500' : 'border-white/[0.08] focus:border-[#FF7A00]'
                     } rounded-xl px-4 py-3.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-4 ${
@@ -286,9 +356,9 @@ export const ContactForm: React.FC = React.memo(() => {
                     id="contact-email"
                     name="email"
                     type="email"
-                    value={formData.email}
+                    value={form.email}
                     onChange={handleChange}
-                    placeholder="example@domain.com"
+                    placeholder="test@gmail.com"
                     className={`w-full bg-white/[0.04] border ${
                       errors.email ? 'border-red-500/80 focus:border-red-500' : 'border-white/[0.08] focus:border-[#FF7A00]'
                     } rounded-xl px-4 py-3.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-4 ${
@@ -313,9 +383,9 @@ export const ContactForm: React.FC = React.memo(() => {
                   id="contact-subject"
                   name="subject"
                   type="text"
-                  value={formData.subject}
+                  value={form.subject}
                   onChange={handleChange}
-                  placeholder="Project Collaboration / Opportunity"
+                  placeholder="Portfolio Test"
                   className={`w-full bg-white/[0.04] border ${
                     errors.subject ? 'border-red-500/80 focus:border-red-500' : 'border-white/[0.08] focus:border-[#FF7A00]'
                   } rounded-xl px-4 py-3.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-4 ${
@@ -339,9 +409,9 @@ export const ContactForm: React.FC = React.memo(() => {
                   id="contact-message"
                   name="message"
                   rows={5}
-                  value={formData.message}
+                  value={form.message}
                   onChange={handleChange}
-                  placeholder="Tell me about your project, timeline, and goals..."
+                  placeholder="Hello from my portfolio"
                   className={`w-full min-h-[160px] bg-white/[0.04] border ${
                     errors.message ? 'border-red-500/80 focus:border-red-500' : 'border-white/[0.08] focus:border-[#FF7A00]'
                   } rounded-xl px-4 py-3.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-4 ${
@@ -356,25 +426,34 @@ export const ContactForm: React.FC = React.memo(() => {
                 )}
               </div>
 
-              {/* Submit Feedback Banners */}
+              {/* Success Banner */}
               {submitStatus === 'success' && (
-                <div className="flex items-center space-x-2.5 text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 p-4 rounded-xl text-sm animate-fade-in">
+                <div className="flex items-center space-x-2.5 text-emerald-400 bg-emerald-400/10 border border-emerald-400/25 p-4 rounded-xl text-sm">
                   <CheckCircle2 size={18} className="shrink-0" />
                   <span className="font-medium">{statusMessage}</span>
                 </div>
               )}
 
+              {/* Error Banner with raw EmailJS details */}
               {submitStatus === 'error' && (
-                <div className="flex items-center space-x-2.5 text-rose-400 bg-rose-400/10 border border-rose-400/25 p-4 rounded-xl text-sm animate-fade-in">
-                  <AlertCircle size={18} className="shrink-0" />
-                  <span className="font-medium">{statusMessage}</span>
+                <div className="space-y-2 text-rose-400 bg-rose-400/10 border border-rose-400/25 p-4 rounded-xl text-sm">
+                  <div className="flex items-center space-x-2.5">
+                    <AlertCircle size={18} className="shrink-0" />
+                    <span className="font-medium">{statusMessage}</span>
+                  </div>
+                  {rawErrorText && (
+                    <div className="p-3 bg-black/60 rounded-lg border border-rose-500/20 font-mono text-xs text-rose-300 break-all select-all">
+                      <span className="text-neutral-400 font-bold block mb-1">EmailJS Error Details:</span>
+                      {rawErrorText}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Large Premium Send Button */}
+              {/* Send Button */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || testRunning}
                 className="w-full py-4 px-8 bg-[#FF7A00] hover:bg-[#ff8c1a] text-black font-bold rounded-xl flex items-center justify-center space-x-2 text-sm sm:text-base tracking-wide uppercase shadow-lg shadow-[#FF7A00]/25 hover:shadow-[0_0_25px_rgba(255,122,0,0.4)] hover:-translate-y-[2px] active:translate-y-0 active:scale-[0.99] disabled:opacity-60 disabled:pointer-events-none transition-all duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] cursor-pointer"
               >
                 {isSubmitting ? (
@@ -389,6 +468,31 @@ export const ContactForm: React.FC = React.memo(() => {
                   </>
                 )}
               </button>
+
+              {/* Direct EmailJS Diagnostic Test Button */}
+              <div className="pt-3 border-t border-white/[0.08] flex items-center justify-between flex-wrap gap-2">
+                <span className="text-[11px] text-neutral-500 font-mono">
+                  Diagnostics:
+                </span>
+                <button
+                  type="button"
+                  onClick={testEmail}
+                  disabled={testRunning || isSubmitting}
+                  className="text-xs px-3.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-accent border border-white/[0.1] hover:border-accent/40 flex items-center gap-1.5 transition-all font-mono active:scale-95 disabled:opacity-50 cursor-pointer"
+                >
+                  {testRunning ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin text-accent" />
+                      <span>Sending Test Payload...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={12} className="text-accent" />
+                      <span>⚡ Test EmailJS Connection</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           </div>
         </motion.div>
