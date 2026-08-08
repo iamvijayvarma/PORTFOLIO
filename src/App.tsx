@@ -10,7 +10,7 @@ import { Skills } from './components/Skills';
 import { Projects } from './components/Projects';
 import { Experience } from './components/Experience';
 import { Achievements } from './components/Achievements';
-import { Contact } from './components/Contact';
+import { ContactForm } from './components/ContactForm';
 import { Footer } from './components/Footer';
 import { Splash } from './components/Splash';
 
@@ -102,7 +102,7 @@ function App() {
           <Projects />
           <Experience />
           <Achievements />
-          <Contact />
+          <ContactForm />
         </main>
 
         <Footer />
