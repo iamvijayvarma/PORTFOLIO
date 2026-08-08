@@ -212,13 +212,13 @@ export const Skills: React.FC = React.memo(() => {
       <div className="w-full h-full md:h-screen flex items-center">
         <div
           ref={trackRef}
-          className="flex flex-col md:flex-row md:items-center w-full md:w-max gap-8 md:gap-12 lg:gap-14 pl-6 sm:pl-10 md:pl-14 lg:pl-16 xl:pl-20 pr-6 sm:pr-10 md:pr-16 lg:pr-24 py-12 md:py-0 will-change-transform"
+          className="flex flex-col md:flex-row md:items-center w-full md:w-max gap-10 md:gap-14 lg:gap-16 xl:gap-20 pl-6 sm:pl-10 md:pl-14 lg:pl-16 xl:pl-20 pr-6 sm:pr-10 md:pr-16 lg:pr-24 py-12 md:py-0 will-change-transform"
           style={{
             transform: 'translate3d(0, 0, 0)',
           }}
         >
           {/* Left Editorial Fixed Showcase Panel */}
-          <div className="shrink-0 w-full md:w-[420px] lg:w-[480px] xl:w-[520px] flex flex-col justify-center space-y-6 pr-0 md:pr-8 lg:pr-12">
+          <div className="shrink-0 w-full md:w-[460px] lg:w-[520px] xl:w-[560px] flex flex-col justify-center space-y-6 pr-4 md:pr-8 lg:pr-12 overflow-hidden">
             <div className="flex items-center space-x-3">
               <span className="h-[1.5px] w-8 bg-[#FF7A00]" />
               <span className="text-[#FF7A00] text-xs font-bold uppercase tracking-[0.28em] font-mono">
@@ -226,7 +226,7 @@ export const Skills: React.FC = React.memo(() => {
               </span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-white font-heading leading-[1.05]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black uppercase tracking-tight text-white font-heading leading-[1.04] max-w-full">
               TECH STACK <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF7A00] via-[#FF9E40] to-white">
                 &amp; TOOLCHAIN
